@@ -1,4 +1,5 @@
 require('dotenv').config();
+// Testing GitHub Actions CI/CD
 const express = require('express');
 const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
