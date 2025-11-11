@@ -33,7 +33,7 @@ jobs:
       run: npm install
     
     - name: Run tests
-      run: npm test
+      run: npm test -- --forceExit
       env:
         MONGODB_URL: mongodb://127.0.0.1:27017/test
         JWT_ACCESS_SECRET: test-secret-key
