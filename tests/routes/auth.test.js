@@ -101,4 +101,8 @@ describe('POST /api/auth/login', () => {
         expect(response.body.error).toBe('All input is required');
     });
 
+    afterAll(async () => {
+        const mongoose = require('mongoose');
+        await mongoose.connection.close();
+    });
 });
