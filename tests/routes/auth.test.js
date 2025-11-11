@@ -1,59 +1,104 @@
-//Manas Manker //lab1 assignment
+//Nikunj Shetye //lab1-Unit test
 
 const request = require('supertest');
-const app = require('../../server'); // relative path to server.js
+const app = require('../../server');
 
-describe('Auth Routes - Signup', () => {
-  it('should signup a new user successfully', async () => {
-    const res = await request(app)
-      .post('/api/auth/signup')
-      .send({
-        name: "Manas Manker",
-        username: "manas",
-        email: "manas121@gmail.com",
-        password: "Manas221"
-      });
-    expect(res.statusCode).toBe(201);
-    expect(res.body).toHaveProperty('id');
-    expect(res.body).toHaveProperty('name', 'Manas Manker');
-    expect(res.body).toHaveProperty('username', 'manas');
-    expect(res.body).toHaveProperty('email', 'manas121@gmail.com');
-  });
-
-  it('should not allow signup with missing fields', async () => {
-    const res = await request(app)
-      .post('/api/auth/signup')
-      .send({
-        // name is missing
-        username: "testuser_missing",
-        email: "missing@example.com",
-        password: "Manas221"
-      });
-    expect(res.statusCode).toBe(400);
-    expect(res.body).toHaveProperty('error', 'All fields are required');
-  });
-
-  it('should not allow duplicate email or username', async () => {
-    // First signup
-    await request(app)
-      .post('/api/auth/signup')
-      .send({
-        name: "Duplicate User",
-        username: "dupuser",
-        email: "dup@example.com",
-        password: "Manas221"
-      });
+describe('POST /api/auth/login', () => {
     
-    // Second signup with same email
-    const res = await request(app)
-      .post('/api/auth/signup')
-      .send({
-        name: "Duplicate User Again",
-        username: "dupuser2",
-        email: "dup@example.com", // same email
-        password: "Manas221"
-      });
-    expect(res.statusCode).toBe(409);
-    expect(res.body).toHaveProperty('error'); // "User already exists" or similar
-  });
+    it('should login with valid credentials', async () => {
+        // Create test user first
+        await request(app)
+            .post('/api/auth/signup')
+            .send({
+                name: 'Test User',
+                username: 'testuser',
+                email: 'test@example.com',
+                password: 'password123'
+            });
+
+        // Test login
+        const response = await request(app)
+            .post('/api/auth/login')
+            .send({
+                emailOrUsername: 'test@example.com',
+                password: 'password123'
+            })
+            .expect(200);
+        
+        expect(response.body.success).toBe(true);
+    });
+
+    it('should return error for invalid credentials', async () => {
+        const response = await request(app)
+            .post('/api/auth/login')
+            .send({
+                emailOrUsername: 'wrong@email.com',
+                password: 'wrongpass'
+            })
+            .expect(404);
+        
+        expect(response.body.error).toBe('Invalid credentials');
+    });
+
+    it('should return error when fields are missing', async () => {
+        const response = await request(app)
+            .post('/api/auth/login')
+            .send({
+                emailOrUsername: 'test@example.com'
+                // missing password
+            })
+            .expect(400);
+        
+        expect(response.body.error).toBe('All input is required');
+    });
+
+    // test with username instead of email
+    it('should login using username', async () => {
+        const response = await request(app)
+            .post('/api/auth/login')
+            .send({
+                emailOrUsername: 'testuser',
+                password: 'password123'
+            })
+            .expect(200);
+        
+        expect(response.body.success).toBe(true);
+    });
+
+    // test wrong password
+    it('should fail with wrong password', async () => {
+        const response = await request(app)
+            .post('/api/auth/login')
+            .send({
+                emailOrUsername: 'test@example.com',
+                password: 'wrongpassword'
+            })
+            .expect(404);
+        
+        expect(response.body.error).toBe('Invalid credentials');
+    });
+
+    // test empty password
+    it('should fail when password is empty', async () => {
+        const response = await request(app)
+            .post('/api/auth/login')
+            .send({
+                emailOrUsername: 'test@example.com',
+                password: ''
+            })
+            .expect(400);
+        
+        expect(response.body.error).toBe('All input is required');
+    });
+
+    // test when both fields empty
+    it('should fail when no data sent', async () => {
+        const response = await request(app)
+            .post('/api/auth/login')
+            .send({})
+            .expect(400);
+        
+        expect(response.body.error).toBe('All input is required');
+    });
+
 });
